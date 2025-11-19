@@ -13,8 +13,7 @@ interface SaveAnalysisResponse {
 export default function useWizard(
   total = 7,
   fileId?: string,
-  analysisId?: string,
-  analysisData?: any
+  analysisId?: string
 ) {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);

@@ -4,7 +4,7 @@ import Completion from "./components/completion";
 import useFileUpload from "./hooks/useFileUpload";
 import useWizard from "./hooks/useWizard";
 import UploadSection from "./components/UploadSection";
-import Header from "./components/Header";
+import Header from "./components/header";
 
 // Define types for the analysis data
 interface AnalysisData {
@@ -32,19 +32,6 @@ interface AnalysisData {
   analyzedAt?: string;
 }
 
-interface FileMeta {
-  name: string;
-  size: number;
-  sizeText: string;
-  ext: string;
-  type: string;
-  fileId?: string;
-  analysisId?: string;
-  uploadedAt?: string;
-  n8nResponse?: AnalysisData;
-  mode?: "server" | "dummy";
-}
-
 export default function App() {
   const {
     fileMeta,
@@ -67,12 +54,7 @@ export default function App() {
     completeAnalysis,
     saving,
     usingDummyMode: wizardDummyMode,
-  } = useWizard(
-    7,
-    fileMeta?.fileId,
-    fileMeta?.analysisId,
-    (fileMeta as any)?.n8nResponse
-  );
+  } = useWizard(7, fileMeta?.fileId, fileMeta?.analysisId);
 
   const [showWizard, setShowWizard] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);

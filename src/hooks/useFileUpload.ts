@@ -60,7 +60,7 @@ export default function useFileUpload() {
       try {
         const xhr = new XMLHttpRequest();
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
           xhr.upload.addEventListener("progress", (event) => {
             if (event.lengthComputable) {
               const progress = (event.loaded / event.total) * 100;
