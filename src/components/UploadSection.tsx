@@ -117,6 +117,16 @@ export default function UploadSection({
       <div className="bg-linear-to-br from-white to-gray-50 rounded-xl p-4 shadow-lg border border-white/80 backdrop-blur-sm">
         {!fileMeta ? (
           <div className="space-y-6">
+            {/* Hero Section */}
+            <div className="text-center mb-6">
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                AI CV Analysis
+              </h1>
+              <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
+                Upload a CV and walk through a clean, step-by-step analysis.
+                Quit anytime or start over with a new upload.
+              </p>
+            </div>
             {/* Upload Area */}
             <label
               className={`flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100/50 cursor-pointer transition-all duration-200 ${

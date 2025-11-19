@@ -1,196 +1,258 @@
 import { useState } from "react";
 
-export type CriteriaItem = {
-  id: number;
-  label: string;
-  dislike?: boolean;
-  reason?: string;
-  rating?: number | string;
+const responseMap = {
+  Competences: "Issue Competence",
+  Functions: "Function",
+  Languages: "Languages",
+  Industry: "Industry",
+  Education: "Education level",
+  International: "International experience",
 };
 
-type CriteriaListProps = {
-  initial?: CriteriaItem[];
-  selectOptions?: string[];
-  needsRating?: boolean;
-  title: string;
-  items?: CriteriaItem[];
-  onAddItem?: (label: string) => void;
-  onRemoveItem?: (id: number) => void;
-  onUpdateRating?: (id: number, rating: number) => void;
-};
+// Dummy data for CriteriaList
+const dummyCriteriaData = [
+  {
+    "Issue Competence": [
+      {
+        row_number: 3,
+        criterium_category: "Issue Competence",
+        hard_criterium: "9110 - Professional IM",
+        score: 5,
+      },
+      {
+        row_number: 4,
+        criterium_category: "Issue Competence",
+        hard_criterium: "0400 - Human Resources",
+        score: 5,
+      },
+      {
+        row_number: 5,
+        criterium_category: "Issue Competence",
+        hard_criterium: "0415 - Recruiting",
+        score: 5,
+      },
+    ],
+    Function: [
+      {
+        row_number: 13,
+        criterium_category: "Function",
+        hard_criterium: "510 HR Director",
+        score: 3,
+      },
+      {
+        row_number: 14,
+        criterium_category: "Function",
+        hard_criterium: "510 HR Director",
+        score: 3,
+      },
+    ],
+    Languages: [
+      {
+        row_number: 18,
+        criterium_category: "Languages",
+        hard_criterium: "German",
+        score: "Mother tongue",
+      },
+      {
+        row_number: 19,
+        criterium_category: "Languages",
+        hard_criterium: "English",
+        score: "Fluent",
+      },
+    ],
+    Industry: [
+      {
+        row_number: 22,
+        criterium_category: "Industry",
+        hard_criterium: "F13 - Components for industry",
+        score: 3,
+      },
+      {
+        row_number: 23,
+        criterium_category: "Industry",
+        hard_criterium: "M15 - Manufacture of electronic components and boards",
+        score: 3,
+      },
+    ],
+    "Education level": [
+      {
+        row_number: 27,
+        criterium_category: "Education level",
+        hard_criterium: "Bachelor's degree",
+      },
+    ],
+    "International experience": [
+      {
+        row_number: 28,
+        criterium_category: "International experience",
+        hard_criterium: "Turkey",
+      },
+    ],
+  },
+];
 
-export default function CriteriaList({
-  items = [],
-  selectOptions = [],
-  needsRating = false,
-  title,
-  onAddItem,
-  onRemoveItem,
-  onUpdateRating,
-}: Readonly<CriteriaListProps>) {
-  const [selected, setSelected] = useState("");
-  const [localItems, setLocalItems] = useState(items);
-  const [isHovered, setIsHovered] = useState<number | null>(null);
+export default function CriteriaList({ criteriaData = dummyCriteriaData }) {
+  const [showFeedback, setShowFeedback] = useState<{ [key: string]: boolean }>(
+    {}
+  );
+  const [feedbackValues, setFeedbackValues] = useState<{
+    [key: string]: string;
+  }>({});
 
-  function addItem() {
-    if (!selected) {
-      showToast("Please select a value", "error");
-      return;
-    }
-    const newItem = {
-      id: Date.now(),
-      label: selected,
-      dislike: false,
-      reason: "",
-      rating: "",
-    };
-    if (onAddItem) {
-      onAddItem(selected);
-    } else {
-      setLocalItems((prev) => [...prev, newItem]);
-    }
-    setSelected("");
-    showToast("Added successfully");
-  }
-
-  function removeItem(id: number) {
-    if (onRemoveItem) {
-      onRemoveItem(id);
-    } else {
-      setLocalItems((prev) => prev.filter((i) => i.id !== id));
-    }
-  }
-
-  function toggleDislike(id: number) {
-    setLocalItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, dislike: !i.dislike } : i))
+  if (!criteriaData || criteriaData.length === 0) {
+    return (
+      <div className="p-4 text-center text-gray-500">
+        No criteria data available
+      </div>
     );
   }
 
-  function updateItem(id: number, changes: Partial<CriteriaItem>) {
-    setLocalItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, ...changes } : i))
-    );
-  }
+  const api = criteriaData[0];
 
-  function showToast(msg: string, type: "success" | "error" = "success") {
-    const n = document.createElement("div");
-    n.className = `fixed top-6 right-6 z-50 px-4 py-3 rounded-lg text-white font-medium text-sm shadow-lg backdrop-blur-sm border border-white/10 ${
-      type === "error" ? "bg-red-500" : "bg-green-500"
-    }`;
-    n.textContent = msg;
-    document.body.appendChild(n);
-    setTimeout(() => n.remove(), 1800);
-  }
+  const handleThumbsDown = (sectionTitle: string, index: number) => {
+    const key = `${sectionTitle}-${index}`;
+    setShowFeedback((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
 
-  const displayItems = onAddItem ? items : localItems;
+  const handleFeedbackChange = (key: string, value: string) => {
+    setFeedbackValues((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const sendFeedbackToBackend = async (
+    sectionTitle: string,
+    item: any,
+    feedback: string
+  ) => {
+    try {
+      const feedbackData = {
+        section: sectionTitle,
+        criteria: item.hard_criterium,
+        feedback: feedback,
+        rowNumber: item.row_number,
+        timestamp: new Date().toISOString(),
+      };
+
+      console.log("Sending feedback to backend:", feedbackData);
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      console.log("Feedback sent successfully (simulated)");
+      alert(
+        "Feedback submitted successfully! This would be sent to the backend in a real application."
+      );
+
+      // Reset feedback input
+      const key = `${sectionTitle}-${item.row_number}`;
+      setShowFeedback((prev) => ({ ...prev, [key]: false }));
+      setFeedbackValues((prev) => ({ ...prev, [key]: "" }));
+    } catch (error) {
+      console.error("Error sending feedback:", error);
+      alert("Error submitting feedback. Please try again.");
+    }
+  };
 
   return (
-    <div className="bg-linear-to-br from-white to-gray-50 rounded-xl p-6 shadow-sm border border-white/80">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <i className="fa-solid fa-list text-blue-500 text-sm"></i>
-        {title}
-      </h3>
+    <div className="criteria-wrapper space-y-6">
+      {Object.keys(responseMap).map((sectionTitle) => {
+        const apiKey = responseMap[sectionTitle];
+        const items = api[apiKey];
 
-      <ul className="space-y-3 mb-6">
-        {displayItems.map((item) => (
-          <li
-            key={item.id}
-            className={`bg-white rounded-lg p-3 border border-gray-200 shadow-sm transition-all duration-200 ${
-              isHovered === item.id
-                ? "transform -translate-y-0.5 shadow-md"
-                : ""
-            }`}
-            onMouseEnter={() => setIsHovered(item.id)}
-            onMouseLeave={() => setIsHovered(null)}
+        if (!items || items.length === 0) return null;
+
+        return (
+          <div
+            key={sectionTitle}
+            className="criteria-section border border-gray-200 rounded-lg p-4 bg-white"
           >
-            <div className="flex justify-between items-center gap-3">
-              <div className="flex-1 text-sm font-medium text-gray-700">
-                {item.label}
-              </div>
+            <h2 className="criteria-title text-lg font-semibold mb-3 text-gray-800">
+              {sectionTitle}
+            </h2>
 
-              {needsRating && (
-                <select
-                  className="px-3 py-1.5 border border-gray-300 rounded-md bg-white text-gray-700 text-sm min-w-24"
-                  value={item.rating || ""}
-                  onChange={(e) => {
-                    if (onUpdateRating) {
-                      onUpdateRating(item.id, parseInt(e.target.value));
-                    } else {
-                      updateItem(item.id, { rating: e.target.value });
-                    }
-                  }}
-                >
-                  <option value="">Rate…</option>
-                  <option value="1">1 - Beginner</option>
-                  <option value="2">2 - Basic</option>
-                  <option value="3">3 - Intermediate</option>
-                  <option value="4">4 - Advanced</option>
-                  <option value="5">5 - Expert</option>
-                </select>
-              )}
+            <ul className="criteria-items space-y-2">
+              {items.map((item, index) => {
+                const key = `${sectionTitle}-${index}`;
+                const showFeedbackInput = showFeedback[key];
+                const feedbackValue = feedbackValues[key] || "";
 
-              <div className="flex gap-1">
-                <button
-                  className={`p-2 border rounded-md transition-colors ${
-                    item.dislike
-                      ? "bg-red-50 border-red-200 text-red-600"
-                      : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
-                  }`}
-                  onClick={() => toggleDislike(item.id)}
-                  title="Dislike"
-                >
-                  <i className="fa-solid fa-thumbs-down text-xs"></i>
-                </button>
-                <button
-                  className="p-2 border border-red-200 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
-                  onClick={() => removeItem(item.id)}
-                  title="Delete"
-                >
-                  <i className="fa-solid fa-trash text-xs"></i>
-                </button>
-              </div>
-            </div>
+                return (
+                  <li
+                    key={index}
+                    className="criteria-item flex justify-between items-start p-3 border border-gray-100 rounded bg-gray-50"
+                  >
+                    <div className="flex-1">
+                      <span className="font-medium">{item.hard_criterium}</span>
+                      {item.score && (
+                        <span className="ml-2 text-sm text-gray-500">
+                          (Score: {item.score})
+                        </span>
+                      )}
+                    </div>
 
-            <div
-              className={`mt-3 transition-all duration-300 overflow-hidden ${
-                item.dislike ? "max-h-32" : "max-h-0"
-              }`}
-            >
-              <textarea
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-none min-h-20"
-                placeholder="Why is this not suitable?"
-                value={item.reason || ""}
-                onChange={(e) =>
-                  updateItem(item.id, { reason: e.target.value })
-                }
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
+                    <div className="flex flex-col items-end ml-4">
+                      <button
+                        className="thumb-button p-2 rounded hover:bg-gray-200 transition-colors"
+                        onClick={() => handleThumbsDown(sectionTitle, index)}
+                      >
+                        👎
+                      </button>
 
-      <div className="flex gap-3 items-center">
-        <select
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-700 text-sm"
-          value={selected}
-          onChange={(e) => setSelected(e.target.value)}
-        >
-          <option value="">Add new {title.toLowerCase()}…</option>
-          {selectOptions.map((option, idx) => (
-            <option key={idx} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <button
-          className="px-4 py-2 bg-gradient-to-br from-blue-500 to-blue-600 text-white border-none rounded-md text-sm font-medium flex items-center gap-2 transition-all duration-200 hover:shadow-md"
-          onClick={addItem}
-        >
-          <i className="fa-solid fa-plus text-xs"></i>
-          Add
-        </button>
-      </div>
+                      {showFeedbackInput && (
+                        <div className="mt-2 w-64">
+                          <textarea
+                            value={feedbackValue}
+                            onChange={(e) =>
+                              handleFeedbackChange(key, e.target.value)
+                            }
+                            placeholder="Why is this criteria not suitable?"
+                            className="w-full p-2 border border-gray-300 rounded text-sm"
+                            rows={3}
+                          />
+                          <div className="flex gap-2 mt-1">
+                            <button
+                              onClick={() =>
+                                sendFeedbackToBackend(
+                                  sectionTitle,
+                                  item,
+                                  feedbackValue
+                                )
+                              }
+                              className="flex-1 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors"
+                            >
+                              Submit
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowFeedback((prev) => ({
+                                  ...prev,
+                                  [key]: false,
+                                }));
+                                setFeedbackValues((prev) => ({
+                                  ...prev,
+                                  [key]: "",
+                                }));
+                              }}
+                              className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
     </div>
   );
 }
