@@ -7,7 +7,9 @@ import {
   CheckIcon,
   HandThumbDownIcon,
   ChatBubbleLeftRightIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
+
 type CriteriaItem = {
   id: number;
   label: string;
@@ -24,6 +26,7 @@ type WizardProps = {
   objectUrl: string;
   onComplete: (analysisData: any, editedData: any) => void;
   n8nResponse?: any;
+  quit?: () => void; // Add quit function prop
 };
 
 // Dummy data matching your provided structure
@@ -151,6 +154,7 @@ export default function Wizard({
   objectUrl,
   onComplete,
   n8nResponse,
+  quit, // Destructure quit function
 }: Readonly<WizardProps>) {
   const [criteriaData, setCriteriaData] = useState<any>({});
   const [analysisData, setAnalysisData] = useState<any>(null);
@@ -158,6 +162,7 @@ export default function Wizard({
     {}
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false);
 
   // Map UI step → API keys
   const apiMap: Record<number, string> = {
@@ -273,6 +278,24 @@ export default function Wizard({
   };
 
   /* -----------------------------
+      QUIT ANALYSIS
+  ------------------------------*/
+  const handleQuit = () => {
+    setShowQuitConfirm(true);
+  };
+
+  const confirmQuit = () => {
+    if (quit) {
+      quit();
+    }
+    setShowQuitConfirm(false);
+  };
+
+  const cancelQuit = () => {
+    setShowQuitConfirm(false);
+  };
+
+  /* -----------------------------
       COMPLETE - SIMULATE BACKEND CALL
   ------------------------------*/
   const handleComplete = async () => {
@@ -307,10 +330,8 @@ export default function Wizard({
   const progress = ((step - 1) / (total - 1)) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100  px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="max-w-8xl mx-auto">
         {/* Progress Bar */}
         <div className="mb-6">
           <div className="flex justify-between text-sm text-gray-500 mb-2">
@@ -334,24 +355,34 @@ export default function Wizard({
                 <h2 className="text-xl font-semibold text-white">
                   {stepConfig[step as keyof typeof stepConfig].title}
                 </h2>
-                <p className="text-blue-100 text-sm mt-1">
-                  {stepConfig[step as keyof typeof stepConfig].description}
-                </p>
               </div>
-              <div className="bg-white/20 rounded-full px-3 py-1">
-                <span className="text-white text-sm font-medium">
-                  Step {step}/{total}
-                </span>
+              <div className="flex items-center space-x-3">
+                <div className="bg-white/20 rounded-full px-3 py-1">
+                  <span className="text-white text-sm font-medium">
+                    Step {step}/{total}
+                  </span>
+                </div>
+                {/* Quit Button */}
+                {quit && (
+                  <button
+                    onClick={handleQuit}
+                    className="flex items-center cursor-pointer space-x-2 px-3 py-1.5 bg-red-500 hover:bg-white/30 text-white rounded-lg transition-colors"
+                    title="Exit analysis"
+                  >
+                    <XMarkIcon className="w-4 h-4 " />
+                    <span className="text-sm">Exit</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
 
           {/* Content Area */}
-          <div className="p-3">
+          <div className="p-4">
             {step > 1 ? (
-              <div className="grid lg:grid-cols-3 gap-6">
+              <div className="grid lg:grid-cols-5 gap-4">
                 {/* PDF Preview */}
-                <aside className="lg:col-span-1">
+                <aside className="lg:col-span-3">
                   <div className="sticky top-6">
                     <PdfPreview objectUrl={objectUrl} label="Uploaded CV" />
                     <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -416,17 +447,6 @@ export default function Wizard({
                                       >
                                         {item.label}
                                       </span>
-                                      {item.score && (
-                                        <span
-                                          className={`ml-2 text-sm ${
-                                            item.isNegative
-                                              ? "text-red-600"
-                                              : "text-gray-500"
-                                          }`}
-                                        >
-                                          • Score: {item.score}
-                                        </span>
-                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -512,21 +532,34 @@ export default function Wizard({
           {/* Navigation Footer */}
           <div className="bg-gray-50 p-3 border-t border-gray-200">
             <div className="flex items-center justify-between">
-              <button
-                className="flex items-center space-x-2 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                disabled={step === 1}
-                onClick={prev}
-              >
-                <ChevronLeftIcon className="w-5 h-5" />
-                <span>Previous</span>
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  className="flex items-center space-x-2 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  disabled={step === 1}
+                  onClick={prev}
+                >
+                  <ChevronLeftIcon className="w-5 h-5" />
+                  <span>Previous</span>
+                </button>
+
+                {/* Quit Button in Footer for mobile */}
+                {quit && (
+                  <button
+                    onClick={handleQuit}
+                    className="flex items-center space-x-2 px-3 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 hover:border-red-400 transition-colors lg:hidden"
+                  >
+                    <XMarkIcon className="w-5 h-5" />
+                    <span>Exit Analysis</span>
+                  </button>
+                )}
+              </div>
 
               <div className="flex items-center space-x-3">
                 {step === total && (
                   <span className="text-sm text-gray-500">Review complete</span>
                 )}
                 <button
-                  className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   onClick={step === total ? handleComplete : next}
                   disabled={isSubmitting}
                 >
@@ -537,7 +570,6 @@ export default function Wizard({
                     </>
                   ) : step === total ? (
                     <>
-                      <CheckIcon className="w-5 h-5" />
                       <span>Complete Analysis</span>
                     </>
                   ) : (
@@ -552,6 +584,40 @@ export default function Wizard({
           </div>
         </div>
       </div>
+
+      {/* Quit Confirmation Modal */}
+      {showQuitConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="bg-red-100 p-2 rounded-full">
+                <XMarkIcon className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Exit Analysis?
+              </h3>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to exit the analysis? Your progress will be
+              lost and you'll need to start over.
+            </p>
+            <div className="flex space-x-3 justify-end">
+              <button
+                onClick={cancelQuit}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmQuit}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Exit Analysis
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

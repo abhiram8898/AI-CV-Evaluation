@@ -113,7 +113,7 @@ export default function UploadSection({
   const isUploading = uploading || manualUploading;
 
   return (
-    <section className="max-w-2xl mx-auto">
+    <section className="max-w-8xl mx-auto">
       <div className="bg-linear-to-br from-white to-gray-50 rounded-xl p-4 shadow-lg border border-white/80 backdrop-blur-sm">
         {!fileMeta ? (
           <div className="space-y-6">

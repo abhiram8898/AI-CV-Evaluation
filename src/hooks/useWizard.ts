@@ -38,18 +38,23 @@ export default function useWizard(
           editedDataSteps: Object.keys(editedData).length,
         });
 
+        // Prepare the data in the required JSON format
+        const requestData = {
+          analysed: analysisData, // Original analysis data
+          edited: editedData, // User edited data
+          fileId,
+          analysisId,
+          savedAt: new Date().toISOString(),
+        };
+
+        console.log("Sending data to backend:", requestData);
+
         const response = await fetch(SAVE_ANALYSIS_ENDPOINT, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            analysisData,
-            editedData,
-            fileId,
-            analysisId,
-            savedAt: new Date().toISOString(),
-          }),
+          body: JSON.stringify(requestData),
         });
 
         if (!response.ok) {

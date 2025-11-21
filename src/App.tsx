@@ -145,7 +145,7 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 relative">
       <Header />
       <main className="relative z-10">
-        <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="max-w-8xl mx-auto p-2 md:px-6 md:py-12">
           {/* Main Content */}
           {!showWizard && !showCompletion && (
             <UploadSection
@@ -167,6 +167,7 @@ export default function App() {
               objectUrl={objectUrl}
               onComplete={handleComplete}
               n8nResponse={(fileMeta as any)?.n8nResponse}
+              quit={quitWizard}
             />
           )}
 

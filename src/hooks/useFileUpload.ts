@@ -19,7 +19,7 @@ interface FileMeta {
   fileId?: string;
   analysisId?: string;
   uploadedAt?: string;
-  mode?: "server" | "dummy"; // Add mode tracking
+  mode?: "server" | "dummy";
 }
 
 export default function useFileUpload() {
@@ -27,7 +27,7 @@ export default function useFileUpload() {
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [usingDummyMode, setUsingDummyMode] = useState(false); // Track if we're using dummy mode
+  const [usingDummyMode, setUsingDummyMode] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const NODE_BACKEND_URL = "http://localhost:3001";
@@ -51,11 +51,7 @@ export default function useFileUpload() {
   const uploadToBackend = useCallback(
     async (file: File): Promise<FileUploadResponse> => {
       const formData = new FormData();
-      formData.append("cv", file);
-      formData.append("fileName", file.name);
-      formData.append("fileType", file.type);
-      formData.append("fileSize", file.size.toString());
-      formData.append("uploadTime", new Date().toISOString());
+      formData.append("resume", file, file.name); // Match n8n format: file, filename
 
       try {
         const xhr = new XMLHttpRequest();
@@ -74,7 +70,7 @@ export default function useFileUpload() {
                 const response = JSON.parse(xhr.responseText);
 
                 if (response.success) {
-                  setUsingDummyMode(false); // Server is working
+                  setUsingDummyMode(false);
                   resolve({
                     success: true,
                     data: response.data,
@@ -83,7 +79,6 @@ export default function useFileUpload() {
                     n8nResponse: response.data.n8nResponse,
                   });
                 } else {
-                  // Server responded but with error - fallback to dummy
                   console.log("Server responded with error, using dummy mode");
                   setUsingDummyMode(true);
                   resolve({
@@ -138,7 +133,7 @@ export default function useFileUpload() {
           });
 
           xhr.open("POST", UPLOAD_ENDPOINT);
-          xhr.timeout = 5000; // Reduce timeout to 5 seconds for faster fallback
+          xhr.timeout = 5000;
           xhr.send(formData);
         });
       } catch (error) {
@@ -157,7 +152,6 @@ export default function useFileUpload() {
 
   const handleFile = useCallback(
     async (file: File) => {
-      // Reset dummy mode state
       setUsingDummyMode(false);
 
       // Validate file type
@@ -184,7 +178,7 @@ export default function useFileUpload() {
         // Start simulated progress for better UX
         await simulateUploadProgress();
 
-        // Upload to Node.js backend (will fallback to dummy automatically)
+        // Upload to Node.js backend
         const uploadResult = await uploadToBackend(file);
 
         if (uploadResult.error && !uploadResult.success) {
@@ -203,7 +197,7 @@ export default function useFileUpload() {
           fileId: uploadResult.fileId,
           analysisId: uploadResult.analysisId,
           uploadedAt: new Date().toISOString(),
-          mode: usingDummyMode ? "dummy" : "server", // Track the mode
+          mode: usingDummyMode ? "dummy" : "server",
         };
 
         setFileMeta(meta);
@@ -269,7 +263,7 @@ export default function useFileUpload() {
     setFileMeta(null);
     setUploading(false);
     setUploadProgress(0);
-    setUsingDummyMode(false); // Reset dummy mode
+    setUsingDummyMode(false);
     if (fileRef.current) {
       fileRef.current.value = "";
     }
@@ -293,6 +287,6 @@ export default function useFileUpload() {
     reset,
     setObjectUrl,
     setFileMeta,
-    usingDummyMode, // Export this
+    usingDummyMode,
   };
 }
